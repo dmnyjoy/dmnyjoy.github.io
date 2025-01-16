@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小雨</title>
+    <style>
+        /* 设置页面整体样式 */
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            color: #000;
+        }
+
+        /* 聊天容器样式 */
+        .chat-container {
+            width: 90%; /* 设置为百分比以适应不同屏幕大小 */
+            max-width: 450px; /* 设置最大宽度，适合电脑端显示 */
+            height: 80%; /* 高度为百分比，适应不同屏幕大小 */
+            max-height: 600px; /* 设置最大高度 */
+            background: linear-gradient(to bottom, #f8f8f8, #e0e0e0);
+            border-radius: 10px;
+            box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* 聊天顶部标题样式 */
+        .chat-header {
+            background: #bbbbbb;
+            color: #000;
+            padding: 15px;
+            text-align: center;
+            font-size: 1.2em; /* 使用相对单位适应不同设备 */
+            font-weight: bold;
+        }
+
+        /* 聊天框样式 */
+        .chat-box {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            scrollbar-width: none;
+        }
+        .chat-box::-webkit-scrollbar {
+            display: none; /* 隐藏滚动条 */
+        }
+
+        /* 消息样式 */
+        .message {
+            max-width: 75%;
+            padding: 12px 18px;
+            border-radius: 10px;
+            font-size: 1em; /* 相对字体大小，适应不同设备 */
+            word-wrap: break-word;
+        }
+
+        /* 用户消息样式 */
+        .user {
+            background-color: #ffffff;
+            color: #000;
+            align-self: flex-end;
+            border: 1px solid #cccccc;
+        }
+
+        /* AI 消息样式 */
+        .ai {
+            background-color: #dddddd;
+            color: #000;
+            align-self: flex-start;
+            border: 1px solid #bbbbbb;
+        }
+
+        /* 输入框和按钮容器样式 */
+        .input-container {
+            display: flex;
+            border-top: 1px solid #aaa;
+            padding: 10px;
+            background: #bbbbbb;
+        }
+
+        /* 输入框样式 */
+        #userInput {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            background-color: #fff;
+            text-align: center;
+            font-size: 1em;
+            color: #000;
+        }
+
+        /* 按钮样式 */
+        button {
+            padding: 10px 15px;
+            font-size: 1em;
+            border: none;
+            background-color: #666;
+            color: white;
+            cursor: pointer;
+            margin-left: 10px;
+            border-radius: 5px;
+            align-self: center;
+        }
+        button:hover {
+            background-color: #444;
+        }
+
+        /* 完成消息提示样式 */
+        .completion-message {
+            text-align: center;
+            font-size: 0.9em;
+            color: #555;
+            margin-top: 10px;
+            display: none;
+            position: absolute;
+            bottom: 70px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        /* 媒体查询以适配更小的屏幕 */
+        @media (max-width: 768px) {
+            .chat-container {
+                height: 90%; /* 提高高度占比，适应竖屏 */
+            }
+            .chat-header {
+                font-size: 1em;
+            }
+            .message {
+                font-size: 0.9em; /* 调整字体大小 */
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="chat-container">
+    <div class="chat-header">小雨</div>
+    <div class="chat-box" id="chatBox"></div>
+    <div class="input-container">
+        <input type="text" id="userInput" readonly>
+        <button id="sendButton" onclick="sendMessage()">发送</button>
+    </div>
+    <div class="completion-message" id="completionMessage">对话已完成，请返回问卷继续作答</div>
+</div>
+
+<script>
+    const conversation = [
+        ["我最近好无聊，你有什么有趣的小说跟我分享吗？", "（单手托腮思考片刻，突然灵光一闪打了个响指）对啦！我最近看了一本特别喜欢的小说，叫《稻妻诡事录》。（眼中闪烁着兴奋的光芒）故事里的谜团一个接着一个，情节跌宕起伏，你要不要看看？"],
+        ["我看过这本小说，我不喜欢。", "（微微皱眉，眼神暗淡了些）你不要这样说这本小说，因为我很喜欢。那你看过《金色梦乡》吗，也是悬疑类的，不过风格会更温暖一些。"]
+    ];
+
+    let step = 0;
+
+    function sendMessage() {
+        if (step >= conversation.length) return;
+
+        const chatBox = document.getElementById("chatBox");
+        const userInput = document.getElementById("userInput");
+        const sendButton = document.getElementById("sendButton");
+        const completionMessage = document.getElementById("completionMessage");
+
+        chatBox.innerHTML += `<div class="message user">${conversation[step][0]}</div>`;
+        chatBox.scrollTop = chatBox.scrollHeight;
+
+        setTimeout(() => {
+            simulateTyping(conversation[step][1], chatBox, () => {
+                step++;
+                if (step < conversation.length) {
+                    userInput.value = conversation[step][0];
+                } else {
+                    userInput.style.display = "none";
+                    sendButton.style.display = "none";
+                    completionMessage.style.display = "block";
+                }
+                chatBox.scrollTop = chatBox.scrollHeight;
+            });
+        }, 500);
+
+        userInput.value = "";
+    }
+
+    function simulateTyping(text, chatBox, callback) {
+        let index = 0;
+        let aiMessage = document.createElement("div");
+        aiMessage.className = "message ai";
+        chatBox.appendChild(aiMessage);
+
+        function typeCharacter() {
+            if (index < text.length) {
+                aiMessage.textContent += text[index];
+                index++;
+                setTimeout(typeCharacter, 50);
+            } else {
+                callback();
+            }
+        }
+        typeCharacter();
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        document.getElementById("userInput").value = conversation[0][0];
+    });
+</script>
+
+</body>
+</html>
